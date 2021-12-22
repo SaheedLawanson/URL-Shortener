@@ -20,11 +20,15 @@ Built with
 
 
 
+
 Getting Started To get a local copy up and running, follow these simple steps.
 
 
+
 Prerequisites
-npm
+
+- npm
+
 
 
 Installation & Usage
