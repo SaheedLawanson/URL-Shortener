@@ -33,7 +33,7 @@ Prerequisites
 
 Installation & Usage
 
-- Clone the repo: git clone https://github.com/SaheedLawanson/Timestamp-Microservice.git
+- Clone the repo: git clone https://github.com/SaheedLawanson/URL-Shortener.git
 
 - Install node: run in cmd ```npm install node```
 
