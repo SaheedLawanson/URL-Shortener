@@ -14,49 +14,102 @@ app.get('/', (req, res) => {
 
 
 
-// Pseudo data base to store all shortened sites
-let urls = []
-// An id for each site, increases by one once current value is taken
+// THE APP
+
+/* 
+  Post request to /api/shorturl
+  return a json object with original and short url
+  The short url must redirect to long url 
+*/
+// Initiate a pseudo database
+let db = []
+// Initiate a starting id
 let id = 1
 
+// Create post request to /api/shorturl
+app.post('/api/shorturl', 
+  bodyParser.urlencoded({extended: false}),
+  (req, res) => {
+  // Initiate an empty response object
+  let responseObj = {}
 
-app.post('/api/shorturl', bodyParser.urlencoded({extended: false}), (req, res) => {
-  // Empty object to temporarily store the original and short url before migrating
-  // to pseudo database
-  let obj= {}
-  // User input url collected and stored
-  let url = req.body.url
-  // the "https://" prefix is removed from url
-  let strippedUrl = url.replace(/https?:\/\//, "")
- 
-  // Checks to see if url provided exists
-  dns.lookup(strippedUrl, error => {
-    // If it doesnt exist return an error
-    if(error){return res.json({error: "invalid url"})}
+  // Use body parser to extract the original url
+  let original_url = req.body.url
+
+  // Check if the url host exists
+  let urlHost = new URL(original_url).hostname
+
+  dns.lookup(urlHost, (error, address, family) => {
+    // if original url supplied doesn't follow http format, force it to fail dns validation
+    let rgx = /https?:\/\//
+    if(!rgx.test(original_url)){error = 1}
+
+    // if it doesnt return {error: 'invalid url'}
+    if(error){
+      responseObj['error'] = 'invalid url'
+    } 
+    
+    // If it exists
+    else {
+      // Search through the db to see if an object with the same original url exists
+      let repetition = undefined
+      if(db.length > 0) {
+        repetition = db.find(item => item.original_url == original_url)
+      }
+      
+      // If it does
+      if(repetition) {
+        // Set the response object to the repeated object
+        responseObj = repetition
+      }
+
+      // If it doesn't
+      else {
+        // Add the url and the current id to the response object
+        responseObj['original_url'] = original_url
+        responseObj['short_url'] = id
+        // Generate a new id
+        id++
+        // Push it to the database
+        db.push(responseObj)
+      }
+    }
+
+  // return the response object
+  res.json(responseObj)
   })
-
-  // store the url inputed by the user in the empty object
-  obj['original_url'] = url
-  // assign it an id which would be used as a shortcut to lookup the site
-  obj['short_url'] = id
-
-  // Save the object in the database
-  urls.push({original_url: url, short_url: id})
-  // Generate a new id by increasing the value of the current id by one
-  id++
-
-  return res.json(obj)
 })
 
-// a get request to a certain id
+/*
+  Get request to /api/shorturl/<shorturl>
+  redirect to original url
+  if original url is not correct
+  return {error: "invalid url"}
+*/
+// Create the get request to /api/shorturl/:id
 app.get('/api/shorturl/:id', (req, res) => {
+  // Initiate a responseObj
+  let responseObj = {}
 
-  // Find the object which has the same id as the one supplied in the get request
-  let correctUrl = urls.find(urrl => urrl.short_url == req.params.id)
+  // Find the object in the db that has the requested id
+  let requestObj = db.find(item => item.short_url == req.params.id)
 
-  // redirect the page to the url that has the searched id
-  res.redirect(correctUrl.original_url)
+  // if it exists   
+  if(requestObj) {
+    // response object = the object
+    responseObj = requestObj
+
+    // redirect user to the object's original url
+    res.redirect(responseObj.original_url)
+  }
+  
+  // If there's no object with the id
+  else {
+    // response object = {error: 'invalid id'}
+    return res.json({error: 'invalid id'})
+  }
 })
+
 
 // Run server
 app.listen(port, () => {
