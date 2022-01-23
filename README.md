@@ -1,5 +1,5 @@
 
-3 About the project
+# About the project
 This project serves as an api that can be used to shorten web links. The root page has a text box which expects to receive a link to a valid web page, if the correct link is provided, an id is generated and assignedto the provided link. The id can be used as a shortcut to link to the page it was assigned to by making a get request to ```/api/<id>```. Use cases:
 
 - If the url "https://www.google.com" inputted into the text-box and then the "Shorten" button is clicked on, then a json object like {'original_url': "https://www.google.com", 'short_url': 1} is returned.
